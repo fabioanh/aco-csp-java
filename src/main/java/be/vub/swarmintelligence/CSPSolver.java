@@ -107,7 +107,7 @@ public class CSPSolver implements Solver {
 		for (Ant ant : this.ants) {
 			ant.findSolution(this.pheromoneProbabilities, this.problem.getAlphabet());
 			ant.evaluateSolution(this.problem.getStrings());
-			if (this.bestAnt.getScore() > ant.getScore()) {
+			if (this.bestAnt.getMaxHammingDistance() > ant.getMaxHammingDistance()) {
 				this.bestAnt = ant;
 			}
 		}
