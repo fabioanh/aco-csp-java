@@ -39,7 +39,10 @@ public class CSPSolver implements Solver {
 		// System.out.println(this.problem.getAlphabet());
 		// System.out.println(this.pheromoneProbabilities);
 		this.evaporatePheromone();
-		// System.out.println(this.pheromoneProbabilities);
+		System.out.println(this.pheromoneProbabilities);
+		this.normalizePheromone();
+		System.out.println(this.pheromoneProbabilities);
+		
 	}
 
 	@Override

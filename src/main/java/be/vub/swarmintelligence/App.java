@@ -33,6 +33,11 @@ public class App {
 			if (cliArgs.hasOption("instance")) {
 				response.put("instance", (String)cliArgs.getOptionValue("instance"));
 			}
+			if (cliArgs.hasOption("numants")) {
+				response.put("numants", Integer.valueOf(cliArgs.getOptionValue("numants")));
+			}else{
+				response.put("numants", 20);
+			}
 			if (cliArgs.hasOption("rho")) {
 				response.put("rho", Double.valueOf(cliArgs.getOptionValue("rho")));
 			}else{
@@ -42,6 +47,11 @@ public class App {
 				response.put("seed", Integer.valueOf(cliArgs.getOptionValue("seed")));
 			}else{
 				response.put("seed", 1234);
+			}
+			if (cliArgs.hasOption("maxiter")) {
+				response.put("maxiter", Integer.valueOf(cliArgs.getOptionValue("maxiter")));
+			}else{
+				response.put("maxiter", 1000);
 			}
 		} catch (ParseException ex) {
 			// oops, something went wrong
@@ -65,6 +75,16 @@ public class App {
 		//@formatter:on
 		
 		//@formatter:off
+		Option numAnts = Option.builder("n").
+				argName("numants").
+				hasArg().
+				longOpt("numants").
+				desc("Number of ants to be used in the colony").
+				build();
+		options.addOption(numAnts);
+		//@formatter:on
+		
+		//@formatter:off
 		Option rho = Option.builder("r").
 				argName("rho").
 				hasArg().
@@ -81,7 +101,17 @@ public class App {
 				longOpt("seed").
 				desc("Seed value used in the random numbers generation").
 				build();
-		options.addOption(rho);
+		options.addOption(seed);
+		//@formatter:on
+		
+		//@formatter:off
+		Option maxIter = Option.builder("m").
+				argName("maxiter").
+				hasArg().
+				longOpt("maxiter").
+				desc("Maximum number of iterations to be run for the solution").
+				build();
+		options.addOption(maxIter);
 		//@formatter:on
 
 		return options;
