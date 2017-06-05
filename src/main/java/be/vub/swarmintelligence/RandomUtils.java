@@ -87,7 +87,7 @@ public class RandomUtils {
 	 * @return
 	 */
 	public Integer getRandomFromSimpleList(List<Double> list) {
-		double p = Math.random();
+		double p = getRandomDouble();
 		double cumulativeProbability = 0.0;
 		Integer idx = 0;
 		for (Double item : list) {
