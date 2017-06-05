@@ -2,7 +2,6 @@ package be.vub.swarmintelligence;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,7 +23,8 @@ public class CSPSolver implements Solver {
 
 	private CSPProblem problem;
 
-	private List<List<Double>> pheromoneProbabilities;
+	private List<List<Double>> pheromone;
+	private List<List<Integer>> heuristicInformation;
 
 	public CSPSolver(Map<String, Object> cfg) throws IOException {
 		this.cfg = cfg;
@@ -36,6 +36,7 @@ public class CSPSolver implements Solver {
 		this.maxIter = (Integer) this.cfg.get("maxiter");
 		this.currentIter = 0;
 		this.initPheromone();
+		this.initHeursiticInformation();
 		this.initAnts();
 	}
 
@@ -62,10 +63,9 @@ public class CSPSolver implements Solver {
 	 */
 	@Override
 	public void initPheromone() {
-		this.pheromoneProbabilities = new ArrayList<>();
+		this.pheromone = new ArrayList<>();
 		for (int i = 0; i < this.problem.getStrLength(); i++) {
-			this.pheromoneProbabilities.add(auxInitPheromoneProbabilities(this.problem.getAlphabetLength(),
-					1.0 / this.problem.getAlphabetLength()));
+			this.pheromone.add(auxInitPheromoneProbabilities());
 		}
 
 	}
@@ -78,10 +78,36 @@ public class CSPSolver implements Solver {
 	 * @param value
 	 * @return
 	 */
-	private ArrayList<Double> auxInitPheromoneProbabilities(int length, Double value) {
+	private ArrayList<Double> auxInitPheromoneProbabilities() {
 		ArrayList<Double> result = new ArrayList<>();
-		for (int i = 0; i < length; i++) {
-			result.add(value);
+		for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
+			result.add(1.0 / this.problem.getAlphabetLength());
+		}
+		return result;
+	}
+
+	/**
+	 * Initializes the Heuristic information with a count of each character that
+	 * occurs at the given position taken from the list of input strings of the
+	 * problem
+	 */
+	private void initHeursiticInformation() {
+		this.heuristicInformation = new ArrayList<>();
+		for (int i = 0; i < this.problem.getStrLength(); i++) {
+			this.heuristicInformation.add(auxInitHeuristicInformation(i));
+		}
+	}
+
+	private List<Integer> auxInitHeuristicInformation(Integer alphIdx) {
+		List<Integer> result = new ArrayList<>();
+		for(int i= 0; i<this.problem.getAlphabetLength(); i++){
+			Integer count = 0;
+			for(String str : this.problem.getStrings()){
+				if(this.problem.getAlphabet().get(i).equals(str.charAt(alphIdx))){
+					count ++;
+				}
+			}
+			result.add(count);
 		}
 		return result;
 	}
@@ -105,7 +131,7 @@ public class CSPSolver implements Solver {
 		// ants.parallelStream().
 
 		for (Ant ant : this.ants) {
-			ant.findSolution(this.pheromoneProbabilities, this.problem.getAlphabet());
+			ant.findSolution(this.pheromone, this.problem.getAlphabet());
 			ant.evaluateSolution(this.problem.getStrings());
 			if (this.bestAnt.getMaxHammingDistance() > ant.getMaxHammingDistance()) {
 				this.bestAnt = ant;
@@ -128,7 +154,7 @@ public class CSPSolver implements Solver {
 	public void evaporatePheromone() {
 		// this.pheromoneProbabilities =
 		// this.pheromoneProbabilities.parallelStream()
-		this.pheromoneProbabilities = this.pheromoneProbabilities.stream()
+		this.pheromone = this.pheromone.stream()
 				.map(p -> p.stream().map(v -> v - this.rho).collect(Collectors.toCollection(ArrayList::new)))
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
@@ -137,9 +163,9 @@ public class CSPSolver implements Solver {
 	public void depositPheromone() {
 		for (int i = 0; i < this.problem.getStrLength(); i++) {
 			int j = this.problem.getInverseAlphabet().get(this.bestAnt.getSolution().charAt(i));
-			Double val = this.pheromoneProbabilities.get(i).get(j)
+			Double val = this.pheromone.get(i).get(j)
 					+ (1.0 - ((double) this.bestAnt.getMaxHammingDistance() / this.problem.getStrLength()));
-			this.pheromoneProbabilities.get(i).set(j, val);
+			this.pheromone.get(i).set(j, val);
 		}
 
 	}
@@ -152,7 +178,7 @@ public class CSPSolver implements Solver {
 		// Make all negative values equals to zero
 		// this.pheromoneProbabilities =
 		// this.pheromoneProbabilities.parallelStream()
-		this.pheromoneProbabilities = this.pheromoneProbabilities.stream()
+		this.pheromone = this.pheromone.stream()
 				.map(p -> p.stream().map(v -> v.compareTo(0.0) < 0 ? 0.0 : v)
 						.collect(Collectors.toCollection(ArrayList::new)))
 				.collect(Collectors.toCollection(ArrayList::new));
@@ -160,7 +186,7 @@ public class CSPSolver implements Solver {
 		// Make all values in probability arrays sum exactly 1.0
 		// this.pheromoneProbabilities =
 		// this.pheromoneProbabilities.parallelStream().map(p -> {
-		this.pheromoneProbabilities = this.pheromoneProbabilities.stream().map(p -> {
+		this.pheromone = this.pheromone.stream().map(p -> {
 			Double sum = p.stream().mapToDouble(a -> a).sum();
 			return p.stream().map(v -> v / sum).collect(Collectors.toCollection(ArrayList::new));
 		}).collect(Collectors.toCollection(ArrayList::new));
