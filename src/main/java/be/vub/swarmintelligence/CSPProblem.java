@@ -24,6 +24,7 @@ public class CSPProblem implements Problem {
 		this.initInternalStructures();
 		this.loadInputData(fileLocation);
 		this.computeInverseAlphabet();
+		LOGGER.debug("Problem properly loaded from input file!");
 	}
 
 	private void computeInverseAlphabet() {

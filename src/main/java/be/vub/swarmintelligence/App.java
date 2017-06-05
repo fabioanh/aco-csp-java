@@ -24,15 +24,19 @@ public class App {
 
 	public static void main(String[] args) throws IOException, ParseException {
 		CommandLineParser parser = new DefaultParser();
-		CommandLine line = parser.parse(helpOptions(), args, true); // true so it
+		CommandLine line = parser.parse(helpOptions(), args, true); // true so
+																	// it
 		// does not throw on unrecognized options
 		if (line.hasOption("help")) {
-		    help(); // calls exit
+			help(); // calls exit
 		}
 		Map<String, Object> cfg = getCLIConfig(args);
 		RandomUtils.getInstance((Integer) cfg.get("seed"));
-		CSPSolver solver = new CSPSolver(cfg);
-		solver.solve();
+		CSPSolver solver;
+		if (cfg.get("algorithm").equals(Algorithm.ELITIST)) {
+			solver = new CSPElitistSolver(cfg);
+			solver.solve();
+		}
 
 	}
 
@@ -78,7 +82,7 @@ public class App {
 			} else {
 				response.put("localsearch", false);
 			}
-			
+
 		} catch (ParseException ex) {
 			// oops, something went wrong
 			LOGGER.error("Parsing failed.  Reason: " + ex.getMessage());
@@ -193,8 +197,8 @@ public class App {
 
 		return options;
 	}
-	
-	private static Options helpOptions(){
+
+	private static Options helpOptions() {
 		//@formatter:off
 		Options options = new Options();
 		Option help = Option.builder("h").

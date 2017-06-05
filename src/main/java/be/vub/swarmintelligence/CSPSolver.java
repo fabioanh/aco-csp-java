@@ -8,23 +8,22 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
-public class CSPSolver implements Solver {
+public abstract class CSPSolver implements Solver {
 	private final static Logger LOGGER = Logger.getLogger(CSPSolver.class);
 
-	private Map<String, Object> cfg;
-	private Double alpha;
-	private Double beta;
-	private Double rho;
-	private Integer numAnts;
-	private Integer maxIter;
-	private Integer currentIter;
-	private Ant bestAnt;
-	private List<Ant> ants;
+	protected Map<String, Object> cfg;
+	protected Double alpha;
+	protected Double beta;
+	protected Double rho;
+	protected Integer numAnts;
+	protected Integer maxIter;
+	protected Integer currentIter;
+	protected List<Ant> ants;
 
-	private CSPProblem problem;
+	protected CSPProblem problem;
 
-	private List<List<Double>> pheromone;
-	private List<List<Integer>> heuristicInformation;
+	protected List<List<Double>> pheromone;
+	protected List<List<Integer>> heuristicInformation;
 
 	public CSPSolver(Map<String, Object> cfg) throws IOException {
 		this.cfg = cfg;
@@ -38,17 +37,8 @@ public class CSPSolver implements Solver {
 		this.initPheromone();
 		this.initHeursiticInformation();
 		this.initAnts();
-	}
 
-	@Override
-	public void solve() {
-		while (!this.terminate()) {
-			this.solveColony();
-			this.currentIter++;
-			LOGGER.info("Iteration: " + this.currentIter + " Score: " + this.bestAnt.getScore() + " Min: "
-					+ this.bestAnt.getMinHammingDistance() + " Max: " + this.bestAnt.getMaxHammingDistance());
-		}
-
+		LOGGER.debug("Solver instance initalised. Ready to go!!!");
 	}
 
 	@Override
@@ -69,6 +59,25 @@ public class CSPSolver implements Solver {
 		}
 
 	}
+
+	@Override
+	public void solve() {
+		while (!this.terminate()) {
+			this.solveColony();
+			this.currentIter++;
+			LOGGER.info("Iteration: " + this.currentIter + " Score: " + this.getCurrentScore() + " Min: "
+					+ this.getCurrentMinHammingDistance() + " Max: " + this.getCurrentMaxHammingDistance());
+		}
+
+	}
+
+	public abstract void solveColony();
+
+	public abstract Long getCurrentScore();
+
+	public abstract Long getCurrentMinHammingDistance();
+
+	public abstract Long getCurrentMaxHammingDistance();
 
 	/**
 	 * Auxiliary function to set the probability values into the arrays that
@@ -100,46 +109,16 @@ public class CSPSolver implements Solver {
 
 	private List<Integer> auxInitHeuristicInformation(Integer alphIdx) {
 		List<Integer> result = new ArrayList<>();
-		for(int i= 0; i<this.problem.getAlphabetLength(); i++){
+		for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
 			Integer count = 0;
-			for(String str : this.problem.getStrings()){
-				if(this.problem.getAlphabet().get(i).equals(str.charAt(alphIdx))){
-					count ++;
+			for (String str : this.problem.getStrings()) {
+				if (this.problem.getAlphabet().get(i).equals(str.charAt(alphIdx))) {
+					count++;
 				}
 			}
 			result.add(count);
 		}
 		return result;
-	}
-
-	@Override
-	public void initAnts() {
-		this.ants = new ArrayList<>();
-		for (int i = 0; i < this.numAnts; i++) {
-			this.ants.add(new Ant());
-		}
-		this.bestAnt = this.ants.get(0);
-		this.solveColony();
-	}
-
-	/**
-	 * Extracted method containing the logic to run the colony over one
-	 * iteration of the solution process.
-	 */
-	private void solveColony() {
-
-		// ants.parallelStream().
-
-		for (Ant ant : this.ants) {
-			ant.findSolution(this.pheromone, this.problem.getAlphabet());
-			ant.evaluateSolution(this.problem.getStrings());
-			if (this.bestAnt.getMaxHammingDistance() > ant.getMaxHammingDistance()) {
-				this.bestAnt = ant;
-			}
-		}
-		this.evaporatePheromone();
-		this.depositPheromone();
-		this.normalizePheromone();
 	}
 
 	/**
@@ -150,42 +129,18 @@ public class CSPSolver implements Solver {
 		return this.maxIter < this.currentIter;
 	}
 
-	@Override
-	public void evaporatePheromone() {
-		// this.pheromoneProbabilities =
-		// this.pheromoneProbabilities.parallelStream()
-		this.pheromone = this.pheromone.stream()
-				.map(p -> p.stream().map(v -> v - this.rho).collect(Collectors.toCollection(ArrayList::new)))
-				.collect(Collectors.toCollection(ArrayList::new));
-	}
-
-	@Override
-	public void depositPheromone() {
-		for (int i = 0; i < this.problem.getStrLength(); i++) {
-			int j = this.problem.getInverseAlphabet().get(this.bestAnt.getSolution().charAt(i));
-			Double val = this.pheromone.get(i).get(j)
-					+ (1.0 - ((double) this.bestAnt.getMaxHammingDistance() / this.problem.getStrLength()));
-			this.pheromone.get(i).set(j, val);
-		}
-
-	}
-
 	/**
 	 * Makes the pheromone probability values match a probability making them
 	 * all positive and sum 1.0
 	 */
-	private void normalizePheromone() {
+	protected void normalizePheromone() {
 		// Make all negative values equals to zero
-		// this.pheromoneProbabilities =
-		// this.pheromoneProbabilities.parallelStream()
 		this.pheromone = this.pheromone.stream()
 				.map(p -> p.stream().map(v -> v.compareTo(0.0) < 0 ? 0.0 : v)
 						.collect(Collectors.toCollection(ArrayList::new)))
 				.collect(Collectors.toCollection(ArrayList::new));
 
 		// Make all values in probability arrays sum exactly 1.0
-		// this.pheromoneProbabilities =
-		// this.pheromoneProbabilities.parallelStream().map(p -> {
 		this.pheromone = this.pheromone.stream().map(p -> {
 			Double sum = p.stream().mapToDouble(a -> a).sum();
 			return p.stream().map(v -> v / sum).collect(Collectors.toCollection(ArrayList::new));
