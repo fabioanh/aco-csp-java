@@ -62,6 +62,16 @@ public class App {
 			} else {
 				response.put("rho", 0.0003);
 			}
+			if (cliArgs.hasOption("alpha")) {
+				response.put("alpha", Double.valueOf(cliArgs.getOptionValue("alpha")));
+			} else {
+				response.put("alpha", 1.0);
+			}
+			if (cliArgs.hasOption("epsilon")) {
+				response.put("epsilon", Double.valueOf(cliArgs.getOptionValue("epsilon")));
+			} else {
+				response.put("epsilon", 0.3);
+			}
 			if (cliArgs.hasOption("seed")) {
 				response.put("seed", Integer.valueOf(cliArgs.getOptionValue("seed")));
 			} else {
@@ -146,6 +156,26 @@ public class App {
 		//@formatter:on
 
 		//@formatter:off
+		Option alpha = Option.builder("a").
+				argName("alpha").
+				hasArg().
+				longOpt("alpha").
+				desc("Alpha value used in probability updates").
+				build();
+		options.addOption(alpha);
+		//@formatter:on
+		
+		//@formatter:off
+		Option epsilon = Option.builder("e").
+				argName("epsilon").
+				hasArg().
+				longOpt("epsilon").
+				desc("Epsilon value used in probability updates for the elitist solution").
+				build();
+		options.addOption(epsilon);
+		//@formatter:on
+
+		//@formatter:off
 		Option seed = Option.builder("s").
 				argName("seed").
 				hasArg().
@@ -166,7 +196,7 @@ public class App {
 		//@formatter:on
 
 		//@formatter:off
-		Option algo = Option.builder("a").
+		Option algo = Option.builder("g").
 				argName("algorithm").
 				hasArg().
 				longOpt("algorithm").

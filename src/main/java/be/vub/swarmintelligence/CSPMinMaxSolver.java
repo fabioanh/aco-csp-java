@@ -22,18 +22,6 @@ public class CSPMinMaxSolver extends CSPSolver {
 	}
 
 	@Override
-	public void evaporatePheromone() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void depositPheromone() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void solveColony() {
 		// TODO Auto-generated method stub
 
@@ -55,6 +43,18 @@ public class CSPMinMaxSolver extends CSPSolver {
 	public Long getCurrentMaxHammingDistance() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void updatePheromone() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	protected void initAdditionalParameters() {
+		// TODO Auto-generated method stub
+
 	}
 
 }

@@ -13,6 +13,8 @@ public class CSPElitistSolver extends CSPSolver {
 
 	private Ant bestAnt;
 
+	private Double epsilon;
+
 	public CSPElitistSolver(Map<String, Object> cfg) throws IOException {
 		super(cfg);
 	}
@@ -21,20 +23,21 @@ public class CSPElitistSolver extends CSPSolver {
 	 * Extracted method containing the logic to run the colony over one
 	 * iteration of the solution process.
 	 */
-	public void solveColony() {
+	@Override
+	protected void solveColony() {
 
 		// ants.parallelStream().
 
 		for (Ant ant : this.ants) {
-			ant.findSolution(this.pheromone, this.problem.getAlphabet());
+			ant.findSolution(this.probability, this.problem.getAlphabet());
 			ant.evaluateSolution(this.problem.getStrings());
 			if (this.bestAnt.getMaxHammingDistance() > ant.getMaxHammingDistance()) {
 				this.bestAnt = ant;
 			}
 		}
-		this.evaporatePheromone();
-		this.depositPheromone();
-		this.normalizePheromone();
+		this.updatePheromone();
+		this.updateProbability();
+		this.normalizeProbability();
 	}
 
 	@Override
@@ -47,14 +50,14 @@ public class CSPElitistSolver extends CSPSolver {
 		this.solveColony();
 	}
 
-	@Override
+	@Deprecated
 	public void evaporatePheromone() {
 		this.pheromone = this.pheromone.stream()
 				.map(p -> p.stream().map(v -> v - this.rho).collect(Collectors.toCollection(ArrayList::new)))
 				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
-	@Override
+	@Deprecated
 	public void depositPheromone() {
 		for (int i = 0; i < this.problem.getStrLength(); i++) {
 			int j = this.problem.getInverseAlphabet().get(this.bestAnt.getSolution().charAt(i));
@@ -66,17 +69,38 @@ public class CSPElitistSolver extends CSPSolver {
 	}
 
 	@Override
-	public Long getCurrentScore() {
+	protected Long getCurrentScore() {
 		return this.bestAnt.getScore();
 	}
 
 	@Override
-	public Long getCurrentMinHammingDistance() {
+	protected Long getCurrentMinHammingDistance() {
 		return this.bestAnt.getMinHammingDistance();
 	}
 
 	@Override
-	public Long getCurrentMaxHammingDistance() {
+	protected Long getCurrentMaxHammingDistance() {
 		return this.bestAnt.getMaxHammingDistance();
+	}
+
+	/**
+	 * Update the pheromone value using an additional increased based on the
+	 * solution given by the best ant
+	 */
+	@Override
+	public void updatePheromone() {
+		this.heuristicPheromone = this.heuristicPheromone.stream()
+				.map(p -> p.stream()
+						.map(v -> new HeuristicPheromone(v.getHeuristicInformationValue(),
+								(1.0 - this.rho) * v.getPheromoneValue()
+										+ this.epsilon * 1.0 / (double) this.getCurrentMaxHammingDistance()))
+						.collect(Collectors.toCollection(ArrayList::new)))
+				.collect(Collectors.toCollection(ArrayList::new));
+
+	}
+
+	@Override
+	protected void initAdditionalParameters() {
+		this.epsilon = (Double) this.cfg.get("epsilon");
 	}
 }

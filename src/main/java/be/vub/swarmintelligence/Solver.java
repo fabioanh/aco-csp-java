@@ -11,9 +11,7 @@ public interface Solver {
 
 	void initAnts();
 	
-	void evaporatePheromone();
-	
-	void depositPheromone();
+	void updatePheromone();
 
 	Boolean terminate();
 
