@@ -7,11 +7,13 @@ public interface Solver {
 
 	void initProblem() throws IOException;
 
-	void initPheromone();
+	void initHeuristicPheromone();
 
 	void initAnts();
 	
 	void updatePheromone();
+	
+	void updateProbability();
 
 	Boolean terminate();
 

@@ -37,7 +37,20 @@ public class CSPElitistSolver extends CSPSolver {
 		}
 		this.updatePheromone();
 		this.updateProbability();
+//		LOGGER.debug(this.printPheromone());
 		this.normalizeProbability();
+	}
+
+	private String printPheromone() {
+		StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		this.heuristicPheromone.stream().forEach(ls -> {
+			sb.append('[');
+			ls.stream().forEach(v -> sb.append(v.getPheromoneValue() + ", "));
+			sb.append("]");
+		});
+		sb.append("]\n");
+		return sb.toString();
 	}
 
 	@Override
@@ -48,24 +61,6 @@ public class CSPElitistSolver extends CSPSolver {
 		}
 		this.bestAnt = this.ants.get(0);
 		this.solveColony();
-	}
-
-	@Deprecated
-	public void evaporatePheromone() {
-		this.pheromone = this.pheromone.stream()
-				.map(p -> p.stream().map(v -> v - this.rho).collect(Collectors.toCollection(ArrayList::new)))
-				.collect(Collectors.toCollection(ArrayList::new));
-	}
-
-	@Deprecated
-	public void depositPheromone() {
-		for (int i = 0; i < this.problem.getStrLength(); i++) {
-			int j = this.problem.getInverseAlphabet().get(this.bestAnt.getSolution().charAt(i));
-			Double val = this.pheromone.get(i).get(j)
-					+ (1.0 - ((double) this.bestAnt.getMaxHammingDistance() / this.problem.getStrLength()));
-			this.pheromone.get(i).set(j, val);
-		}
-
 	}
 
 	@Override
@@ -89,18 +84,38 @@ public class CSPElitistSolver extends CSPSolver {
 	 */
 	@Override
 	public void updatePheromone() {
-		this.heuristicPheromone = this.heuristicPheromone.stream()
-				.map(p -> p.stream()
-						.map(v -> new HeuristicPheromone(v.getHeuristicInformationValue(),
-								(1.0 - this.rho) * v.getPheromoneValue()
-										+ this.epsilon * 1.0 / (double) this.getCurrentMaxHammingDistance()))
-						.collect(Collectors.toCollection(ArrayList::new)))
-				.collect(Collectors.toCollection(ArrayList::new));
+		for (int j = 0; j < this.problem.getStrLength(); j++) {
+			for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
+				Double pherVal = (1.0 - this.rho) * this.heuristicPheromone.get(j).get(i).getPheromoneValue();
+				if (this.bestAnt.getPath().get(j) == i) {
+					pherVal += this.epsilon * 1.0 / (double) this.getCurrentMaxHammingDistance();
+				}
+				this.heuristicPheromone.get(j).get(i).setPheromoneValue(pherVal);
+			}
+		}
 
 	}
 
+	/**
+	 * Updates the probability list using the values for pheromone and heuristic
+	 * information
+	 */
+	public void updateProbability() {
+		for (int j = 0; j < this.problem.getStrLength(); j++) {
+			Double denominator = this.heuristicPheromone.get(j).stream()
+					.mapToDouble(hp -> hp.getPheromoneValue() * Math.pow(hp.getHeuristicInformationValue(), this.alpha))
+					.sum();
+			for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
+				Double value = heuristicPheromone.get(j).get(i).getPheromoneValue()
+						* Math.pow(heuristicPheromone.get(j).get(i).getHeuristicInformationValue(), this.alpha)
+						/ denominator;
+				this.probability.get(j).set(i, value);
+			}
+		}
+	}
+
 	@Override
-	protected void initAdditionalParameters() {
+	protected void loadAdditionalParameters() {
 		this.epsilon = (Double) this.cfg.get("epsilon");
 	}
 }

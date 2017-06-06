@@ -60,7 +60,7 @@ public class App {
 			if (cliArgs.hasOption("rho")) {
 				response.put("rho", Double.valueOf(cliArgs.getOptionValue("rho")));
 			} else {
-				response.put("rho", 0.0003);
+				response.put("rho", 0.003);
 			}
 			if (cliArgs.hasOption("alpha")) {
 				response.put("alpha", Double.valueOf(cliArgs.getOptionValue("alpha")));
@@ -70,7 +70,7 @@ public class App {
 			if (cliArgs.hasOption("epsilon")) {
 				response.put("epsilon", Double.valueOf(cliArgs.getOptionValue("epsilon")));
 			} else {
-				response.put("epsilon", 0.3);
+				response.put("epsilon", 0.5);
 			}
 			if (cliArgs.hasOption("seed")) {
 				response.put("seed", Integer.valueOf(cliArgs.getOptionValue("seed")));

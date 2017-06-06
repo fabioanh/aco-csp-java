@@ -22,10 +22,6 @@ public abstract class CSPSolver implements Solver {
 
 	protected CSPProblem problem;
 
-	@Deprecated
-	protected List<List<Double>> pheromone;
-	@Deprecated
-	protected List<List<Integer>> heuristicInformation;
 	protected List<List<Double>> probability;
 	protected List<List<HeuristicPheromone>> heuristicPheromone;
 
@@ -38,7 +34,7 @@ public abstract class CSPSolver implements Solver {
 		this.numAnts = (Integer) this.cfg.get("numants");
 		this.maxIter = (Integer) this.cfg.get("maxiter");
 		this.currentIter = 0;
-		this.initAdditionalParameters();
+		this.loadAdditionalParameters();
 		this.initHeuristicPheromone();
 		this.initProbability();
 		this.initAnts();
@@ -51,77 +47,12 @@ public abstract class CSPSolver implements Solver {
 		this.problem = new CSPProblem((String) this.cfg.get("instance"));
 	}
 
-	/**
-	 * Initialize the pheromone components. The main component is the array of
-	 * probabilities which is an array of arrays. Each sub-array shows the
-	 * probability of each item to be picked in the shape of a pheromone matrix.
-	 */
-	@Override
-	@Deprecated
-	public void initPheromone() {
-		this.pheromone = new ArrayList<>();
-		for (int i = 0; i < this.problem.getStrLength(); i++) {
-			this.pheromone.add(auxInitPheromone());
-		}
-	}
-
-	/**
-	 * Auxiliary function to set the probability values into the arrays that
-	 * will compose the big array of probabilities (pheromone)
-	 * 
-	 * @param length
-	 * @param value
-	 * @return
-	 */
-	@Deprecated
-	private ArrayList<Double> auxInitPheromone() {
-		ArrayList<Double> result = new ArrayList<>();
-		for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
-			result.add(1.0 / this.problem.getAlphabetLength());
-		}
-		return result;
-	}
-
-	/**
-	 * Initializes the Heuristic information with a count of each character that
-	 * occurs at the given position taken from the list of input strings of the
-	 * problem
-	 */
-	@Deprecated
-	private void initHeursiticInformation() {
-		this.heuristicInformation = new ArrayList<>();
-		for (int i = 0; i < this.problem.getStrLength(); i++) {
-			this.heuristicInformation.add(auxInitHeuristicInformation(i));
-		}
-	}
-
-	/**
-	 * Auxiliary function to set the heuristic information values into the list
-	 * of lists containing the required values
-	 * 
-	 * @param alphIdx
-	 * @return
-	 */
-	@Deprecated
-	private List<Integer> auxInitHeuristicInformation(Integer alphIdx) {
-		List<Integer> result = new ArrayList<>();
-		for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
-			Integer count = 0;
-			for (String str : this.problem.getStrings()) {
-				if (this.problem.getAlphabet().get(i).equals(str.charAt(alphIdx))) {
-					count++;
-				}
-			}
-			result.add(count);
-		}
-		return result;
-	}
 
 	/**
 	 * Initialises the structure that contains both the pheromone and heuristic
 	 * information together for faster computations
 	 */
-	private void initHeuristicPheromone() {
+	public void initHeuristicPheromone() {
 		this.heuristicPheromone = new ArrayList<>();
 		for (int i = 0; i < this.problem.getStrLength(); i++) {
 			this.heuristicPheromone.add(auxInitHeuristicPheromone(i));
@@ -161,13 +92,13 @@ public abstract class CSPSolver implements Solver {
 			this.probability.add(auxInitProbability());
 		}
 
-		this.updateProbability();
+//		this.updateProbability();
 	}
 
 	private List<Double> auxInitProbability() {
 		List<Double> result = new ArrayList<>();
 		for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
-			result.add(0.0);
+			result.add(1.0 / this.problem.getAlphabetLength());
 		}
 		return result;
 	}
@@ -185,24 +116,6 @@ public abstract class CSPSolver implements Solver {
 	// this.updateProbability();
 	//
 	// }
-
-	/**
-	 * Updates the probability list using the values for pheromone and heuristic
-	 * information
-	 */
-	protected void updateProbability() {
-		for (int j = 0; j < this.problem.getStrLength(); j++) {
-			Double denominator = this.heuristicPheromone.get(j).stream()
-					.mapToDouble(hp -> hp.getPheromoneValue() * Math.pow(hp.getHeuristicInformationValue(), this.alpha))
-					.sum();
-			for (int i = 0; i < this.problem.getAlphabetLength(); i++) {
-				Double value = heuristicPheromone.get(j).get(i).getPheromoneValue()
-						* Math.pow(heuristicPheromone.get(j).get(i).getHeuristicInformationValue(), this.alpha)
-						/ denominator;
-				this.probability.get(j).set(i, value);
-			}
-		}
-	}
 
 	@Override
 	public void solve() {
@@ -223,7 +136,7 @@ public abstract class CSPSolver implements Solver {
 
 	protected abstract Long getCurrentMaxHammingDistance();
 
-	protected abstract void initAdditionalParameters();
+	protected abstract void loadAdditionalParameters();
 
 	/**
 	 * Defines the termination condition
@@ -231,25 +144,6 @@ public abstract class CSPSolver implements Solver {
 	@Override
 	public Boolean terminate() {
 		return this.maxIter < this.currentIter;
-	}
-
-	/**
-	 * Makes the pheromone probability values match a probability making them
-	 * all positive and sum 1.0
-	 */
-	protected void normalizePheromone() {
-		// Make all negative values equals to zero
-		this.pheromone = this.pheromone.stream()
-				.map(p -> p.stream().map(v -> v.compareTo(0.0) < 0 ? 0.0 : v)
-						.collect(Collectors.toCollection(ArrayList::new)))
-				.collect(Collectors.toCollection(ArrayList::new));
-
-		// Make all values in probability arrays sum exactly 1.0
-		this.pheromone = this.pheromone.stream().map(p -> {
-			Double sum = p.stream().mapToDouble(a -> a).sum();
-			return p.stream().map(v -> v / sum).collect(Collectors.toCollection(ArrayList::new));
-		}).collect(Collectors.toCollection(ArrayList::new));
-
 	}
 
 	protected void normalizeProbability() {

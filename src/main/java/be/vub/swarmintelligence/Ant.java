@@ -1,5 +1,6 @@
 package be.vub.swarmintelligence;
 
+import java.util.ArrayList;
 import java.util.IntSummaryStatistics;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,7 +13,8 @@ public class Ant {
 	private Long minHammingDistance;
 
 	private String solution;
-
+	private List<Integer> path;
+	
 	/**
 	 * Finds a solution using the probability values given by the pheromone
 	 * traces.
@@ -25,6 +27,7 @@ public class Ant {
 		List<Integer> positions = pheromoneProbabilities.stream().map(ls -> randUtils.getRandomFromSimpleList(ls))
 				.collect(Collectors.toList());
 		StringBuilder sb = new StringBuilder();
+		this.path = positions;
 		for (Integer p : positions) {
 			sb.append(alphabet.get(p));
 		}
@@ -64,6 +67,10 @@ public class Ant {
 
 	public String getSolution() {
 		return solution;
+	}
+	
+	public List<Integer> getPath(){
+		return this.path;
 	}
 
 }
